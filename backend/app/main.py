@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -8,7 +8,17 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from backend.app.core.config import settings
 from backend.app.core.database import engine, Base
 import backend.app.models  # load all models into Base
-from backend.app.api.routes import auth, infrastructure, vision, sensors, prediction, risk, geospatial
+from backend.app.websocket.manager import ws_manager
+from backend.app.api.routes import (
+    auth,
+    infrastructure,
+    vision,
+    sensors,
+    prediction,
+    risk,
+    geospatial,
+    dashboard,
+)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -96,3 +106,29 @@ app.include_router(sensors.router, prefix=settings.API_V1_STR)
 app.include_router(prediction.router, prefix=settings.API_V1_STR)
 app.include_router(risk.router, prefix=settings.API_V1_STR)
 app.include_router(geospatial.router, prefix=settings.API_V1_STR)
+app.include_router(dashboard.router, prefix=settings.API_V1_STR)
+
+
+@app.websocket("/ws/alerts")
+async def websocket_alerts_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time alert broadcasts.
+    Frontend dashboards connect here to receive instant push alerts for critical defects or sensor anomalies.
+    """
+    await ws_manager.connect(websocket)
+    try:
+        # Send greeting connection payload
+        await websocket.send_json({
+            "type": "CONNECTION_ESTABLISHED",
+            "message": "Connected to Structura AI live telemetry & alert stream",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+        while True:
+            # Keep connection open and receive any client ping messages
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_text("pong")
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception:
+        ws_manager.disconnect(websocket)
