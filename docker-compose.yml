@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: structura_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://structura_user:structura_secure_pass_2026@db:5432/structura_db
+      - SECRET_KEY=structura-production-secret-key-change-in-real-deployment
+      - DEMO_MODE=true
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
+      - ./backend/processed:/app/backend/processed
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: structura_postgis_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: structura_user
+      POSTGRES_PASSWORD: structura_secure_pass_2026
+      POSTGRES_DB: structura_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U structura_user -d structura_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
