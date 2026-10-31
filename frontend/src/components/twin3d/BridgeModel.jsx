@@ -73,7 +73,7 @@ export const BridgeModel = ({
       inspectionDate: '2026-10-24',
       healthScore: 68.5,
       position: [-5, 0.5, 0.8],
-      image: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
       description: 'Saline moisture infiltration caused localized rebar oxidation and concrete spalling along the tidal splash zone.',
     },
     {
@@ -85,7 +85,7 @@ export const BridgeModel = ({
       inspectionDate: '2026-10-29',
       healthScore: 52.0,
       position: [0, 2.2, 0.4],
-      image: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1543996991-51fe458abfbd?auto=format&fit=crop&w=800&q=80',
       description: 'Longitudinal hairline shear crack propagated to 3.8mm width across load-bearing asphalt transition zone.',
     },
     {
@@ -97,7 +97,7 @@ export const BridgeModel = ({
       inspectionDate: '2026-10-18',
       healthScore: 78.0,
       position: [5, 4.2, -0.6],
-      image: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
       description: 'High-frequency cyclic vibration anomalies recorded under peak rush-hour heavy freight loading cycles.',
     },
   ];

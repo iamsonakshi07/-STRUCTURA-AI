@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useToast } from './ToastContext';
+import { getWebSocketUrl } from '../services/api';
 
 const WebSocketContext = createContext(null);
 
@@ -12,9 +13,7 @@ export const WebSocketProvider = ({ children }) => {
 
   useEffect(() => {
     let reconnectTimeout = null;
-    const wsUrl =
-      import.meta.env.VITE_WS_BASE_URL ||
-      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/alerts`;
+    const wsUrl = getWebSocketUrl();
 
     const connect = () => {
       try {

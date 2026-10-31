@@ -66,16 +66,16 @@ export const DashboardLayout = () => {
         </main>
       </div>
 
-      {/* Floating AI Structural Copilot Trigger */}
+      {/* Floating AI Structural Assistant Trigger (STRUX) */}
       <div className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() => setIsCopilotOpen(true)}
           className="relative group p-3.5 rounded-2xl bg-gradient-to-br from-cyan via-cyan-500 to-blue-600 text-navy-950 font-bold shadow-cyan-glow-lg hover:shadow-cyan-glow hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-          title="Open AI Structural Copilot"
+          title="Open STRUX AI Assistant"
         >
           <Bot className="w-6 h-6 text-navy-950" />
           <span className="hidden md:inline font-mono text-xs font-black tracking-wide pr-1">
-            COPILOT
+            STRUX
           </span>
           <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-healthy animate-ping" />
         </button>

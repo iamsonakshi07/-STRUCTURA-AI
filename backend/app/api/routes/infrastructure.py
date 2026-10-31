@@ -11,6 +11,7 @@ from backend.app.models.defect import Defect
 from backend.app.models.sensor import SensorReading
 from backend.app.models.alert import Alert
 from backend.app.models.prediction import Prediction
+from backend.app.repositories import infrastructure_repo, defect_repo, sensor_repo, alert_repo, prediction_repo
 from backend.app.schemas.infrastructure import (
     InfrastructureCreate,
     InfrastructureUpdate,
@@ -29,10 +30,7 @@ def create_infrastructure(
     current_user: User = Depends(require_roles("admin", "inspector")),
 ):
     """Register a new infrastructure asset (Bridge, Dam, Overpass, etc.)."""
-    infra = Infrastructure(**infra_in.model_dump())
-    db.add(infra)
-    db.commit()
-    db.refresh(infra)
+    infra = infrastructure_repo.create(db, obj_in=infra_in)
     data = InfrastructureResponse.model_validate(infra)
     return response_success(data=data.model_dump(), message="Infrastructure asset registered successfully")
 
@@ -46,10 +44,7 @@ def list_infrastructure(
     current_user: User = Depends(get_current_user),
 ):
     """Retrieve all monitored infrastructure assets."""
-    query = db.query(Infrastructure)
-    if type:
-        query = query.filter(Infrastructure.infrastructure_type == type.lower())
-    infras = query.offset(skip).limit(limit).all()
+    infras = infrastructure_repo.get_by_type(db, infrastructure_type=type, skip=skip, limit=limit)
     data = [InfrastructureResponse.model_validate(i).model_dump() for i in infras]
     return response_success(data=data, message=f"Retrieved {len(data)} infrastructure assets")
 
@@ -61,14 +56,14 @@ def get_infrastructure_details(
     current_user: User = Depends(get_current_user),
 ):
     """Retrieve full details of an infrastructure asset including defect count and alerts."""
-    infra = db.query(Infrastructure).filter(Infrastructure.id == id).first()
+    infra = infrastructure_repo.get(db, id=id)
     if not infra:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Infrastructure asset with id {id} not found",
         )
 
-    defects_count = db.query(func.count(Defect.id)).filter(Defect.infrastructure_id == id).scalar() or 0
+    defects_count = defect_repo.count_by_infrastructure(db, infrastructure_id=id)
     readings_count = db.query(func.count(SensorReading.id)).filter(SensorReading.infrastructure_id == id).scalar() or 0
     alerts_count = (
         db.query(func.count(Alert.id))
@@ -77,12 +72,7 @@ def get_infrastructure_details(
         or 0
     )
 
-    latest_pred = (
-        db.query(Prediction)
-        .filter(Prediction.infrastructure_id == id)
-        .order_by(Prediction.prediction_date.desc())
-        .first()
-    )
+    latest_pred = prediction_repo.get_latest_by_infrastructure(db, infrastructure_id=id)
 
     detail_data = InfrastructureDetailResponse(
         id=infra.id,
@@ -113,18 +103,14 @@ def update_infrastructure(
     current_user: User = Depends(require_roles("admin", "inspector")),
 ):
     """Update details of an infrastructure asset."""
-    infra = db.query(Infrastructure).filter(Infrastructure.id == id).first()
+    infra = infrastructure_repo.get(db, id=id)
     if not infra:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Infrastructure asset with id {id} not found",
         )
 
-    for field, value in update_data.model_dump(exclude_unset=True).items():
-        setattr(infra, field, value)
-
-    db.commit()
-    db.refresh(infra)
+    infra = infrastructure_repo.update(db, db_obj=infra, obj_in=update_data)
     data = InfrastructureResponse.model_validate(infra)
     return response_success(data=data.model_dump(), message="Infrastructure asset updated successfully")
 
@@ -136,13 +122,12 @@ def delete_infrastructure(
     current_user: User = Depends(require_roles("admin")),
 ):
     """Delete an infrastructure asset and cascade its associated records."""
-    infra = db.query(Infrastructure).filter(Infrastructure.id == id).first()
+    infra = infrastructure_repo.get(db, id=id)
     if not infra:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Infrastructure asset with id {id} not found",
         )
 
-    db.delete(infra)
-    db.commit()
+    infrastructure_repo.remove(db, id=id)
     return response_success(data={"deleted_id": id}, message="Infrastructure asset deleted successfully")

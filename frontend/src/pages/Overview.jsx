@@ -91,10 +91,10 @@ export const Overview = () => {
     category: item.category,
     count: item.count,
   })) || [
-    { category: 'Concrete Cracks', count: 2 },
-    { category: 'Corrosion & Rust', count: 1 },
-    { category: 'Exposed Rebar', count: 1 },
-    { category: 'Deformation', count: 0 },
+    { category: 'Crack', count: 2 },
+    { category: 'Corrosion', count: 1 },
+    { category: 'Rebar Exposure', count: 1 },
+    { category: 'Foundation Shift', count: 1 },
   ];
 
   // KPI card mini-sparklines
@@ -426,10 +426,10 @@ export const Overview = () => {
                       src={
                         asset.image ||
                         (asset.id === 1
-                          ? 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=800&q=80'
+                          ? '/assets/bridge_a_cable_stayed.jpg'
                           : asset.id === 2
-                          ? 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80'
-                          : 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=800&q=80')
+                          ? 'https://images.unsplash.com/photo-1543996991-51fe458abfbd?auto=format&fit=crop&w=800&q=80'
+                          : 'https://images.unsplash.com/photo-1588590501129-5d3ee96acdd5?auto=format&fit=crop&w=800&q=80')
                       }
                       alt={asset.name}
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"

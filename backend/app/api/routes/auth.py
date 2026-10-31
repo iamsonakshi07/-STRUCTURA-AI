@@ -4,6 +4,7 @@ from backend.app.api.deps import get_current_user, require_roles
 from backend.app.core.database import get_db
 from backend.app.core.security import get_password_hash, verify_password, create_access_token
 from backend.app.models.user import User
+from backend.app.repositories import user_repo
 from backend.app.schemas.auth import UserCreate, UserLogin, UserResponse, TokenResponse
 from backend.app.schemas.common import APIResponse, response_success
 
@@ -13,23 +14,20 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=APIResponse[TokenResponse], status_code=status.HTTP_201_CREATED)
 def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
     """Register a new user account with role-based access."""
-    existing_user = db.query(User).filter(User.email == user_in.email.lower()).first()
+    existing_user = user_repo.get_by_email(db, email=user_in.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email address already exists.",
         )
 
-    user = User(
+    user = user_repo.create_user(
+        db,
         name=user_in.name,
-        email=user_in.email.lower(),
+        email=user_in.email,
         password_hash=get_password_hash(user_in.password),
         role=user_in.role.value if hasattr(user_in.role, "value") else str(user_in.role),
-        is_active=True,
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
 
     token = create_access_token(subject=user.id, role=user.role)
     user_data = UserResponse.model_validate(user)
@@ -43,7 +41,7 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=APIResponse[TokenResponse])
 def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user and return a JWT bearer token."""
-    user = db.query(User).filter(User.email == login_data.email.lower()).first()
+    user = user_repo.get_by_email(db, email=login_data.email)
     if not user or not verify_password(login_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

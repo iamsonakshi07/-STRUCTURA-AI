@@ -6,6 +6,7 @@ from backend.app.core.config import settings
 from backend.app.core.database import get_db
 from backend.app.core.security import decode_access_token
 from backend.app.models.user import User
+from backend.app.repositories import user_repo
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
@@ -33,7 +34,7 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = user_repo.get(db, id=int(user_id))
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

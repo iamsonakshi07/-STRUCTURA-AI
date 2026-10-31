@@ -73,7 +73,7 @@ export const mockInfrastructureList = [
     predicted_rul_years: 18.4,
     created_at: "2026-01-10T08:00:00Z",
     updated_at: new Date().toISOString(),
-    image: "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=800&q=80",
+    image: "/assets/bridge_a_cable_stayed.jpg",
   },
   {
     id: 2,
@@ -92,7 +92,7 @@ export const mockInfrastructureList = [
     predicted_rul_years: 8.2,
     created_at: "2026-01-15T09:30:00Z",
     updated_at: new Date().toISOString(),
-    image: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1543996991-51fe458abfbd?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 3,
@@ -111,7 +111,7 @@ export const mockInfrastructureList = [
     predicted_rul_years: 12.6,
     created_at: "2026-02-01T11:00:00Z",
     updated_at: new Date().toISOString(),
-    image: "https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1588590501129-5d3ee96acdd5?auto=format&fit=crop&w=800&q=80",
   },
 ];
 

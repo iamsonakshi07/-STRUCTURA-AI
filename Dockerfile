@@ -32,6 +32,7 @@ ENV PYTHONPATH=/app
 
 # Copy application source code
 COPY backend/ /app/backend/
+COPY alembic.ini /app/alembic.ini
 COPY seed_demo_data.py /app/seed_demo_data.py
 COPY .env.example /app/.env
 

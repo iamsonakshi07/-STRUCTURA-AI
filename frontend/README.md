@@ -48,4 +48,4 @@ FastAPI interactive OpenAPI docs: `http://127.0.0.1:8000/api/v1/docs`
 9. **Inspection Reports** (`/reports`) – Standardized official inspection dossier with print & PDF export support.
 10. **Alerts & Notifications** (`/alerts`) – Live WebSocket incident dispatch, severity filters, and resolution actions.
 11. **Settings & System Health** (`/settings`) – Real-time service diagnostics, API endpoints, and user session management.
-12. **AI Structural Copilot** – Floating assistant answering contextual questions on infrastructure risk and anomalies.
+12. **STRUX AI Assistant** – Floating structural intelligence assistant answering contextual questions on infrastructure risk and anomalies.

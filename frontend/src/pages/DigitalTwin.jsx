@@ -47,7 +47,7 @@ export const DigitalTwin = () => {
       confidence: 0.94,
       inspectionDate: '2026-10-28',
       healthScore: compName.includes('south') ? 58.0 : compName.includes('deck') ? 72.0 : 92.0,
-      image: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=600&q=80',
+      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
       description: `Target component ${compName.toUpperCase()} selected. Structural stress evaluation parameters active.`,
     });
   };

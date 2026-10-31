@@ -18,7 +18,7 @@ import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import apiClient from '../services/api';
+import apiClient, { API_BASE_URL, getBackendRootUrl, getWebSocketUrl } from '../services/api';
 
 export const Settings = () => {
   const { user, switchDemoRole } = useAuth();
@@ -37,16 +37,16 @@ export const Settings = () => {
   const checkHealth = async () => {
     setIsChecking(true);
     try {
-      const res = await apiClient.get('/health', { baseURL: 'http://127.0.0.1:8000' });
+      const res = await apiClient.get('/health', { baseURL: getBackendRootUrl() });
       setSystemHealth((prev) => ({
         ...prev,
         backend: 'online',
-        database: 'connected',
+        database: res.data?.database === 'connected' ? 'connected' : 'degraded',
         timestamp: res.timestamp || new Date().toISOString(),
       }));
       addToast({
         title: 'System Diagnostics Healthy',
-        message: 'FastAPI core, SQLite, and ML models are active.',
+        message: 'FastAPI core, PostgreSQL database, and ML models are active.',
         type: 'success',
       });
     } catch (err) {
@@ -222,20 +222,20 @@ export const Settings = () => {
             <div className="p-3.5 rounded-xl bg-navy-900/80 border border-navy-700/60 space-y-2.5">
               <div>
                 <span className="text-[10px] text-soft-subtle uppercase block">REST API Base Endpoint</span>
-                <span className="text-cyan font-bold block mt-0.5">
-                  {import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'}
+                <span className="text-cyan font-bold block mt-0.5 break-all">
+                  {API_BASE_URL}
                 </span>
               </div>
               <div className="pt-2 border-t border-navy-800">
                 <span className="text-[10px] text-soft-subtle uppercase block">WebSocket Telemetry URL</span>
-                <span className="text-healthy font-bold block mt-0.5">
-                  {import.meta.env.VITE_WS_BASE_URL || 'ws://127.0.0.1:8000/ws/alerts'}
+                <span className="text-healthy font-bold block mt-0.5 break-all">
+                  {getWebSocketUrl()}
                 </span>
               </div>
               <div className="pt-2 border-t border-navy-800">
-                <span className="text-[10px] text-soft-subtle uppercase block">Static Inspection Files URL</span>
-                <span className="text-soft-white font-bold block mt-0.5">
-                  {import.meta.env.VITE_STATIC_BASE_URL || 'http://127.0.0.1:8000'}
+                <span className="text-[10px] text-soft-subtle uppercase block">Backend Root URL</span>
+                <span className="text-soft-white font-bold block mt-0.5 break-all">
+                  {getBackendRootUrl()}
                 </span>
               </div>
             </div>

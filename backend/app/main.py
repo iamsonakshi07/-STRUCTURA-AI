@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.app.core.config import settings
-from backend.app.core.database import engine, Base
+from backend.app.core.database import engine, Base, verify_database_connection, init_db
 import backend.app.models  # load all models into Base
 from backend.app.websocket.manager import ws_manager
 from backend.app.api.routes import (
@@ -21,8 +21,15 @@ from backend.app.api.routes import (
     dashboard,
 )
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Attempt safe schema initialization if target database is reachable
+try:
+    init_db()
+except Exception as _e:
+    import logging
+    logging.getLogger("structura.startup").warning(
+        f"Database connection check during startup: {_e}. "
+        "Proceeding startup; ensure PostgreSQL is running or verify with /health."
+    )
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -34,10 +41,14 @@ app = FastAPI(
 )
 
 # CORS configuration
+_cors_origins = [str(o).strip() for o in settings.BACKEND_CORS_ORIGINS if o]
+_has_wildcard = "*" in _cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_origin_regex=r"https://.*\.onrender\.com",
+    allow_credentials=not _has_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -87,12 +98,15 @@ def root():
 
 @app.get("/health", tags=["Health"])
 def health_check():
+    db_connected, db_msg, db_details = verify_database_connection()
     return {
         "success": True,
-        "message": "System operational",
+        "message": "System operational" if db_connected else "System operational (database disconnected)",
         "data": {
-            "status": "healthy",
-            "database": "connected",
+            "status": "healthy" if db_connected else "degraded",
+            "database": "connected" if db_connected else "disconnected",
+            "database_message": db_msg,
+            "database_details": db_details,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),

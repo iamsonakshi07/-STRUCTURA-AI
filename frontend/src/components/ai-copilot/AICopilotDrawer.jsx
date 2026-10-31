@@ -17,7 +17,7 @@ export const AICopilotDrawer = ({ isOpen, onClose, infrastructures = [] }) => {
     {
       id: 1,
       sender: 'assistant',
-      text: "Hello, I am the **STRUCTURA AI Engineering Copilot**. I analyze structural defects, IoT vibration telemetry, and Remaining Useful Life (RUL) forecasting models across your infrastructure portfolio. How can I assist your inspection triage today?",
+      text: "Hello! I’m STRUX, your AI Structural Intelligence Assistant. How can I help you monitor and analyze your infrastructure today?",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -122,12 +122,12 @@ You can drill down into the **AI Defect Detection Studio**, **Interactive 3D Dig
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-soft-white font-mono">STRUCTURA COPILOT</h3>
+                <h3 className="text-sm font-bold text-soft-white font-mono">STRUX</h3>
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 uppercase font-mono">
                   AI ASSISTANT
                 </span>
               </div>
-              <p className="text-[11px] text-soft-muted">Multi-modal structural intelligence assistant</p>
+              <p className="text-[11px] text-soft-muted">AI Structural Intelligence Assistant</p>
             </div>
           </div>
           <button
@@ -141,7 +141,7 @@ You can drill down into the **AI Defect Detection Studio**, **Interactive 3D Dig
         {/* Disclaimer banner */}
         <div className="px-4 py-2 bg-navy-800/40 border-b border-navy-700/50 flex items-center gap-2 text-[10px] text-soft-subtle">
           <ShieldAlert className="w-3.5 h-3.5 text-warning flex-shrink-0" />
-          <span>Prototype AI Assistant: Synthesizes real-time API metrics for triage aid.</span>
+          <span>STRUX Assistant: Synthesizes real-time API metrics for triage aid.</span>
         </div>
 
         {/* Messages */}
@@ -202,7 +202,7 @@ You can drill down into the **AI Defect Detection Studio**, **Interactive 3D Dig
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Copilot about risk, cracks, or sensors..."
+              placeholder="Ask STRUX about risk, cracks, or sensors..."
               className="flex-1 px-3 py-2 rounded-xl bg-navy-900 border border-navy-600/70 text-xs text-soft-white placeholder-soft-subtle focus:outline-none focus:border-cyan"
             />
             <button

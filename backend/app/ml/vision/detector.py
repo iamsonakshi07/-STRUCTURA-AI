@@ -108,6 +108,88 @@ class OpenCVDemoVisionDetector(BaseVisionDetector):
                 if len(defects) >= 5:
                     break
 
+        # 3. Rebar Exposure Detection (spalled concrete revealing exposed reinforcement bars)
+        sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+        sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+        grad_mag = np.hypot(sobelx, sobely)
+        if grad_mag.max() > 0:
+            grad_norm = np.uint8(np.clip(grad_mag / grad_mag.max() * 255, 0, 255))
+            _, rebar_thresh = cv2.threshold(grad_norm, 110, 255, cv2.THRESH_BINARY)
+            rebar_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 3))
+            rebar_closed = cv2.morphologyEx(rebar_thresh, cv2.MORPH_CLOSE, rebar_kernel)
+            rebar_contours, _ = cv2.findContours(rebar_closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            for rb_cnt in rebar_contours:
+                rb_area = cv2.contourArea(rb_cnt)
+                if 400 < rb_area < (width * height * 0.22):
+                    rb_x, rb_y, rb_w, rb_h = cv2.boundingRect(rb_cnt)
+                    if rb_w > 40 and rb_h > 25:
+                        # Ensure no direct duplicate overlap with existing defect bounding box
+                        overlap = False
+                        for existing in defects:
+                            eb = existing.bounding_box
+                            if not (rb_x + rb_w < eb.x1 or rb_x > eb.x2 or rb_y + rb_h < eb.y1 or rb_y > eb.y2):
+                                overlap = True
+                                break
+                        if not overlap:
+                            rb_conf = round(float(np.clip(0.80 + (rb_area / 5000.0), 0.80, 0.95)), 2)
+                            rb_sev = "CRITICAL" if rb_area > (width * height * 0.05) else "HIGH"
+                            defects.append(
+                                DefectDetectionItem(
+                                    defect_type="rebar_exposure",
+                                    severity=rb_sev,
+                                    confidence=rb_conf,
+                                    bounding_box=BoundingBox(
+                                        x1=max(0, rb_x - 5),
+                                        y1=max(0, rb_y - 5),
+                                        x2=min(width - 1, rb_x + rb_w + 5),
+                                        y2=min(height - 1, rb_y + rb_h + 5),
+                                    ),
+                                    is_simulated=True,
+                                )
+                            )
+                            break
+
+        # 4. Foundation Shift & Structural Misalignment Detection
+        # Evaluates column verticality (tilt > 2.5 deg) and differential foundation settlement
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=75, minLineLength=int(height * 0.2), maxLineGap=20)
+        if lines is not None:
+            for line in lines:
+                coords = line.ravel()
+                if len(coords) < 4:
+                    continue
+                lx1, ly1, lx2, ly2 = int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3])
+                dy = abs(ly2 - ly1)
+                dx = abs(lx2 - lx1)
+                if dy > 0:
+                    angle_deg = np.degrees(np.arctan2(dx, dy))
+                    # Check for angular tilt indicating column displacement or settlement
+                    if 2.5 <= angle_deg <= 20.0:
+                        min_x = max(0, min(lx1, lx2) - 25)
+                        min_y = max(0, min(ly1, ly2) - 15)
+                        max_x = min(width - 1, max(lx1, lx2) + 25)
+                        max_y = min(height - 1, max(ly1, ly2) + 15)
+
+                        overlap = False
+                        for existing in defects:
+                            eb = existing.bounding_box
+                            if not (max_x < eb.x1 or min_x > eb.x2 or max_y < eb.y1 or min_y > eb.y2):
+                                overlap = True
+                                break
+                        if not overlap:
+                            conf = round(float(np.clip(0.83 + (angle_deg / 35.0), 0.83, 0.94)), 2)
+                            sev = "CRITICAL" if angle_deg > 6.0 else "HIGH"
+                            defects.append(
+                                DefectDetectionItem(
+                                    defect_type="foundation_shift",
+                                    severity=sev,
+                                    confidence=conf,
+                                    bounding_box=BoundingBox(x1=min_x, y1=min_y, x2=max_x, y2=max_y),
+                                    is_simulated=True,
+                                )
+                            )
+                            break
+
         # If image was clean or synthetic without contours, provide standard prototype defect detection
         if not defects:
             # Deterministic default demo defect based on image center
@@ -162,7 +244,7 @@ class YOLOv8VisionDetector(BaseVisionDetector):
         results = self.yolo_model.predict(source=image_path, conf=0.35, verbose=False)
         defects: List[DefectDetectionItem] = []
 
-        class_map = {0: "crack", 1: "corrosion", 2: "exposed_reinforcement", 3: "spalling"}
+        class_map = {0: "crack", 1: "corrosion", 2: "rebar_exposure", 3: "foundation_shift"}
 
         for result in results:
             boxes = result.boxes
@@ -210,25 +292,37 @@ def annotate_image(
     if image is None:
         raise ValueError(f"Could not read image: {image_path}")
 
-    color_palette = {
-        "CRITICAL": (0, 0, 230),     # Red
-        "HIGH": (0, 100, 255),       # Orange/Red
-        "MODERATE": (0, 215, 255),   # Yellow
-        "LOW": (0, 220, 0),          # Green
+    # Category-specific BGR colors: Red (Crack), Orange (Corrosion), Yellow (Rebar Exposure), Purple (Foundation Shift)
+    category_palette = {
+        "crack": (68, 68, 239),               # Red #EF4444
+        "corrosion": (22, 115, 249),           # Orange #F97316
+        "rebar_exposure": (8, 179, 234),       # Yellow #EAB308
+        "exposed_reinforcement": (8, 179, 234),# Yellow
+        "foundation_shift": (247, 85, 168),    # Purple #A855F7
+        "settlement": (247, 85, 168),          # Purple
+    }
+
+    severity_palette = {
+        "CRITICAL": (68, 68, 239),     # Red
+        "HIGH": (22, 115, 249),       # Orange
+        "MODERATE": (8, 179, 234),    # Yellow
+        "LOW": (94, 197, 34),         # Green
     }
 
     height, width = image.shape[:2]
 
     for d in defects:
         bbox = d.bounding_box
-        color = color_palette.get(d.severity.upper(), (0, 255, 255))
+        norm_type = (d.defect_type or "").lower().replace(" ", "_").replace("-", "_")
+        color = category_palette.get(norm_type) or severity_palette.get(d.severity.upper(), (68, 68, 239))
 
         # Draw defect bounding box
         cv2.rectangle(image, (bbox.x1, bbox.y1), (bbox.x2, bbox.y2), color, 3)
 
         # Label text
         sim_tag = "[DEMO]" if d.is_simulated else "[AI-LIVE]"
-        label = f"{sim_tag} {d.defect_type.upper()} ({d.severity}) {int(d.confidence * 100)}%"
+        defect_display = d.defect_type.replace("_", " ").upper()
+        label = f"{sim_tag} {defect_display} ({d.severity}) {int(d.confidence * 100)}%"
 
         (text_w, text_h), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.55, 2)
         top = max(bbox.y1, text_h + 10)

@@ -10,7 +10,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://structura_user:structura_secure_pass_2026@db:5432/structura_db
+      - DATABASE_URL=postgresql+psycopg://structura_admin:structura_secure_pass_2026@db:5432/structura_ai
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=structura_admin
+      - POSTGRES_PASSWORD=structura_secure_pass_2026
+      - POSTGRES_DB=structura_ai
       - SECRET_KEY=structura-production-secret-key-change-in-real-deployment
       - DEMO_MODE=true
     volumes:
@@ -19,24 +24,33 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - structura_network
 
   db:
-    image: postgis/postgis:16-3.4
-    container_name: structura_postgis_db
+    image: postgres:16-alpine
+    container_name: structura_postgres_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: structura_user
+      POSTGRES_USER: structura_admin
       POSTGRES_PASSWORD: structura_secure_pass_2026
-      POSTGRES_DB: structura_db
+      POSTGRES_DB: structura_ai
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U structura_user -d structura_db"]
+      test: ["CMD-SHELL", "pg_isready -U structura_admin -d structura_ai"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - structura_network
 
 volumes:
   postgres_data:
+    driver: local
+
+networks:
+  structura_network:
+    driver: bridge

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Eye, EyeOff, Layers, Sparkles } from 'lucide-react';
-import { getSeverityColor } from '../../utils/formatters';
+import { getDefectCategoryInfo } from '../../utils/formatters';
 
 export const DetectionCanvas = ({
   originalImage,
@@ -23,7 +23,7 @@ export const DetectionCanvas = ({
   const activeImageSrc = mode === 'annotated' && annotatedImageUrl ? annotatedImageUrl : originalImage;
 
   return (
-    <div className="relative w-full h-[480px] bg-navy-950/90 rounded-2xl border border-navy-700/80 overflow-hidden flex flex-col">
+    <div className="relative w-full h-[520px] bg-navy-950/90 rounded-2xl border border-navy-700/80 overflow-hidden flex flex-col">
       {/* Top Controls Bar */}
       <div className="h-12 px-4 bg-navy-900/90 backdrop-blur-md border-b border-navy-700/60 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
@@ -45,12 +45,13 @@ export const DetectionCanvas = ({
             onClick={() => setShowOverlays(!showOverlays)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
               showOverlays
-                ? 'bg-navy-800 text-cyan border border-navy-600'
+                ? 'bg-navy-800 text-cyan border border-navy-600 shadow-sm'
                 : 'bg-navy-800/50 text-soft-subtle'
             }`}
+            title="Toggle category bounding box overlays"
           >
             {showOverlays ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>Bounding Overlays</span>
+            <span>Bounding Overlays {showOverlays ? '(ON)' : '(OFF)'}</span>
           </button>
         </div>
 
@@ -94,7 +95,7 @@ export const DetectionCanvas = ({
             <img
               src={activeImageSrc}
               alt="Structural Defect Inspection"
-              className="max-h-[380px] w-auto rounded-xl object-contain shadow-2xl block"
+              className="max-h-[390px] w-auto rounded-xl object-contain shadow-2xl block"
             />
           ) : (
             <div className="w-[500px] h-[340px] rounded-xl border border-dashed border-navy-700 flex flex-col items-center justify-center text-soft-subtle">
@@ -103,9 +104,8 @@ export const DetectionCanvas = ({
             </div>
           )}
 
-          {/* Interactive Bounding Boxes when in Original Mode with Overlays ON */}
+          {/* Interactive Bounding Boxes across all 4 Defect Categories with Category Colors */}
           {showOverlays &&
-            mode === 'original' &&
             defects.map((def, idx) => {
               const bbox = def.bounding_box || { x1: 50, y1: 50, x2: 250, y2: 200 };
               const leftPct = (bbox.x1 / imageWidth) * 100;
@@ -114,36 +114,63 @@ export const DetectionCanvas = ({
               const heightPct = ((bbox.y2 - bbox.y1) / imageHeight) * 100;
 
               const isSelected = selectedDefectId === def.id || selectedDefectId === idx;
-              const sev = (def.severity || 'HIGH').toUpperCase();
-              const borderColor =
-                sev === 'CRITICAL' ? '#EF4444' : sev === 'HIGH' ? '#F59E0B' : '#00C2D1';
+              const categoryInfo = getDefectCategoryInfo(def.defect_type);
+              const color = categoryInfo.color;
 
               return (
                 <div
                   key={idx}
-                  onClick={() => onSelectDefect && onSelectDefect(def.id || idx)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSelectDefect) onSelectDefect(def.id || idx);
+                  }}
                   className={`absolute cursor-pointer transition-all ${
-                    isSelected ? 'ring-2 ring-cyan shadow-cyan-glow' : ''
+                    isSelected ? 'ring-2 ring-cyan shadow-cyan-glow z-20' : 'z-10'
                   }`}
                   style={{
                     left: `${leftPct}%`,
                     top: `${topPct}%`,
                     width: `${widthPct}%`,
                     height: `${heightPct}%`,
-                    border: `2px solid ${borderColor}`,
-                    backgroundColor: `${borderColor}1A`,
+                    border: `2.5px solid ${color}`,
+                    backgroundColor: `${color}1F`,
+                    boxShadow: isSelected ? `0 0 16px ${color}88` : `0 0 8px ${color}44`,
                   }}
+                  title={`${categoryInfo.name}: ${(def.confidence * 100).toFixed(1)}%`}
                 >
+                  {/* Category Label + Confidence Percentage */}
                   <div
-                    className="absolute -top-6 left-0 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-white uppercase whitespace-nowrap shadow-md"
-                    style={{ backgroundColor: borderColor }}
+                    className="absolute -top-6 left-0 px-2 py-0.5 rounded text-[10px] font-mono font-bold text-white uppercase whitespace-nowrap shadow-lg flex items-center gap-1.5"
+                    style={{ backgroundColor: color }}
                   >
-                    {def.defect_type} ({(def.confidence * 100).toFixed(0)}%)
+                    <span>{categoryInfo.name}</span>
+                    <span className="opacity-90">({(def.confidence * 100).toFixed(0)}%)</span>
                   </div>
                 </div>
               );
             })}
         </div>
+      </div>
+
+      {/* Bottom Category Legend Bar */}
+      <div className="h-10 px-4 bg-navy-900/90 border-t border-navy-700/60 flex items-center justify-between text-[11px] font-mono text-soft-subtle">
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="flex items-center gap-1.5 font-semibold text-soft-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> Crack (Red)
+          </span>
+          <span className="flex items-center gap-1.5 font-semibold text-soft-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F97316]" /> Corrosion (Orange)
+          </span>
+          <span className="flex items-center gap-1.5 font-semibold text-soft-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" /> Rebar Exposure (Yellow)
+          </span>
+          <span className="flex items-center gap-1.5 font-semibold text-soft-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#A855F7]" /> Foundation Shift (Purple)
+          </span>
+        </div>
+        <span className="hidden sm:inline font-mono text-[10px] text-cyan">
+          {defects.length} Defect(s) Mapped
+        </span>
       </div>
     </div>
   );

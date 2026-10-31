@@ -166,7 +166,13 @@ export const InspectionReports = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="relative rounded-xl overflow-hidden border border-navy-700 h-44 bg-navy-950">
                 <img
-                  src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=800&q=80"
+                  src={
+                    selectedAsset.id === 2
+                      ? 'https://images.unsplash.com/photo-1543996991-51fe458abfbd?auto=format&fit=crop&w=800&q=80'
+                      : selectedAsset.id === 3
+                      ? 'https://images.unsplash.com/photo-1588590501129-5d3ee96acdd5?auto=format&fit=crop&w=800&q=80'
+                      : 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80'
+                  }
                   alt="Defect Capture"
                   className="w-full h-full object-cover"
                 />

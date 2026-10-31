@@ -126,3 +126,71 @@ export function getPriorityColor(priority) {
       return 'bg-healthy/20 text-healthy border-healthy/40';
   }
 }
+
+export function getDefectCategoryInfo(defectType) {
+  const normalized = (defectType || '').toLowerCase().replace(/[\s-]/g, '_');
+
+  if (normalized.includes('crack')) {
+    return {
+      key: 'crack',
+      name: 'Crack',
+      color: '#EF4444', // Red
+      tailwindColor: 'text-red-500',
+      bgGlow: 'shadow-red-glow',
+      badge: 'bg-red-500/15 text-red-400 border-red-500/40',
+      description: 'Detection of visible cracks in concrete structures, including flexural cracks, structural cracks, and surface fractures.',
+    };
+  }
+
+  if (normalized.includes('corrosion') || normalized.includes('rust')) {
+    return {
+      key: 'corrosion',
+      name: 'Corrosion',
+      color: '#F97316', // Orange
+      tailwindColor: 'text-orange-500',
+      bgGlow: 'shadow-orange-glow',
+      badge: 'bg-orange-500/15 text-orange-400 border-orange-500/40',
+      description: 'Detection of rust, corrosion stains, and deterioration of concrete or metallic structural components.',
+    };
+  }
+
+  if (normalized.includes('rebar') || normalized.includes('reinforce')) {
+    return {
+      key: 'rebar_exposure',
+      name: 'Rebar Exposure',
+      color: '#EAB308', // Yellow
+      tailwindColor: 'text-yellow-400',
+      bgGlow: 'shadow-yellow-glow',
+      badge: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/40',
+      description: 'Detection of exposed reinforcing steel bars (rebar) caused by concrete spalling, deterioration, or cover loss.',
+    };
+  }
+
+  if (
+    normalized.includes('foundation') ||
+    normalized.includes('shift') ||
+    normalized.includes('settlement') ||
+    normalized.includes('tilt') ||
+    normalized.includes('displacement')
+  ) {
+    return {
+      key: 'foundation_shift',
+      name: 'Foundation Shift',
+      color: '#A855F7', // Purple
+      tailwindColor: 'text-purple-400',
+      bgGlow: 'shadow-purple-glow',
+      badge: 'bg-purple-500/15 text-purple-400 border-purple-500/40',
+      description: 'Detection of potential foundation displacement, settlement, tilting, or structural misalignment based on available visual evidence.',
+    };
+  }
+
+  return {
+    key: 'defect',
+    name: defectType ? defectType.replace(/_/g, ' ') : 'Structural Defect',
+    color: '#00C2D1',
+    tailwindColor: 'text-cyan',
+    bgGlow: 'shadow-cyan-glow',
+    badge: 'bg-cyan/15 text-cyan border-cyan/40',
+    description: 'Detection of structural anomaly and distress along monitored component.',
+  };
+}
