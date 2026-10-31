@@ -7,7 +7,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.app.core.config import settings
 from backend.app.core.database import engine, Base
-from backend.app.api.routes import auth
+import backend.app.models  # load all models into Base
+from backend.app.api.routes import auth, infrastructure
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -89,3 +90,4 @@ def health_check():
 
 # Include Routers
 app.include_router(auth.router, prefix=settings.API_V1_STR)
+app.include_router(infrastructure.router, prefix=settings.API_V1_STR)
