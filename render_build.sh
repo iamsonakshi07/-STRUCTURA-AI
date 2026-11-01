@@ -9,6 +9,8 @@ echo "==> [STRUCTURA AI] Starting Production Deployment Build..."
 # 1. Upgrade pip and install Python packages
 echo "==> [STRUCTURA AI] Installing backend dependencies..."
 python -m pip install --upgrade pip
+# Pre-install lightweight CPU-only PyTorch to prevent downloading 2.5GB CUDA wheels on cloud web services
+pip install torch --index-url https://download.pytorch.org/whl/cpu || true
 pip install -r requirements.txt
 
 # 2. Apply Alembic migrations with connection retries (in case Postgres is provisioning)
