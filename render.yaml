@@ -1,4 +1,5 @@
 
+version: "1"
 
 databases:
   - name: structura-postgres
@@ -7,30 +8,32 @@ databases:
     plan: free
 
 services:
-  # ----------------------------------------------------------------------------
-  # FastAPI REST API & WebSocket Backend Service
-  # ----------------------------------------------------------------------------
   - type: web
     name: structura-backend
-    runtime: python
+    runtime: docker
     plan: free
-    buildCommand: "./render_build.sh"
-    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: structura-postgres
           property: connectionString
+
       - key: SECRET_KEY
         generateValue: true
+
       - key: ALGORITHM
         value: HS256
+
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "1440"
+
       - key: DEMO_MODE
         value: "true"
+
       - key: BACKEND_CORS_ORIGINS
-        value: "http://localhost:5173,http://localhost:3000,https://structura-frontend.onrender.com"
+        value: '["http://localhost:5173","http://localhost:3000"]'
+
       - key: PYTHON_VERSION
         value: "3.11.10"
